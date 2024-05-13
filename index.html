@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>キーワードノーと</title>
+    <style>
+        #r,#s,#e{
+            background: rgb(156, 156, 156);
+            cursor: pointer;
+
+        }
+        #tt,#ok,#kotaehyouji{
+            display: none;
+        }
+        #kotae{
+            position: absolute;
+            left: 700px;
+            bottom: 465px;
+            
+        }
+    </style>
+</head>
+<body>
+    <div id="r">
+        <h1>理科</h1>
+    </div>
+    <div id="s">
+        <h1>社会</h1>
+    </div>
+    <input type="number" value="" id="date">日前に
+    <input type="button" value="GO" id="go">
+    <br><p id="itu"></p>
+    <div id="e">
+        <h1>英語</h1>
+    </div>
+    <input type="button" value="登録" id="add">
+    <div id="mondai">
+        <textarea id="tt" cols="150" rows="10"></textarea>
+        <input type="button" value="ok" id="ok">
+        <input type="button" value="答えを表示" id="kotaehyouji">
+        <div id="kotae"></div>
+        <table id="table" border="1" style="border-collapse: collapse">
+            
+        </table>
+    </div>
+    <script>
+        let itu = document.getElementById("itu");
+        let date = document.getElementById("date");
+        let goBtn = document.getElementById("go");
+        let table = document.getElementById("table");
+        let kotae = document.getElementById("kotae");
+        let kotaehyouji = document.getElementById("kotaehyouji");
+        let dd=[document.getElementById("r"),
+        
+        document.getElementById("s"),
+        
+        document.getElementById("e")];
+        let bb= document.getElementById("add");
+        let tt = document.getElementById("tt");
+        
+        let ok = document.getElementById("ok");
+
+        let addkyoka = 0;
+        let mondai = document.getElementById("mondai");
+
+        let key = localStorage.saveKey.split(":"); //はいれつきょうかごと
+        key=[
+        key[0].split("/"),
+        key[1].split("/"),
+        key[2].split("/")];
+var today = new Date();var yessterday = new Date();var aweek = new Date();var amonth = new Date();var smonth = new Date();var kako = new Date();
+        date.addEventListener("input",()=>{
+            kako.setMonth(today.getMonth()) //リセット
+            kako.setDate(today.getDate() - Number(date.value));
+            itu.textContent = ( '00' + String(kako.getMonth()+1) ).slice( -2 ) + ( '00' +  kako.getDate() ).slice( -2 );
+        });
+
+goBtn.addEventListener("click",()=>{
+            DateWoSet();
+        });
+        
+
+        
+        
+    yessterday.setDate(today.getDate() - 1);
+
+        
+aweek.setDate(today.getDate() - 7);
+
+
+amonth.setDate(today.getDate() - 20);
+
+
+smonth.setDate(today.getDate() - 40);
+    let kyou =  ( '00' + String(today.getMonth()+1) ).slice( -2 ) + ( '00' +  today.getDate() ).slice( -2 ); //もじれつ
+        let dayl = ( '00' + String(yessterday.getMonth()+1) ).slice( -2 ) + ( '00' +  yessterday.getDate() ).slice( -2 ); //もじれつ
+        let weekl = ( '00' + String(aweek.getMonth()+1) ).slice( -2 ) + ( '00' +  aweek.getDate() ).slice( -2 ); //もじれつ
+        let monthl = ( '00' + String(amonth.getMonth()+1) ).slice( -2 ) + ( '00' +  amonth.getDate() ).slice( -2 ); //もじれつ
+        let smonthl = ( '00' + String(smonth.getMonth()+1) ).slice( -2 ) + ( '00' +  smonth.getDate() ).slice( -2 ); //もじれつ
+        console.log(kyou,dayl,weekl,monthl,smonthl);
+        let hyoji =[[],[],[]];
+        console.log(key);
+        key.forEach((e,i) => {
+            key[i].forEach((t,c) => {
+                if(key[i][c].includes(dayl) || key[i][c].includes(weekl)  || key[i][c].includes(monthl) || key[i][c].includes(smonthl)){
+                    //cをきろく
+                    console.log(key[i][c].includes(dayl) || key[i][c].includes(weekl)  || key[i][c].includes(monthl) || key[i][c].includes(smonthl));
+                    console.log(t);
+                    dd[i].style.background =  "rgb(50, 197, 62)";
+                    hyoji[i].push(key[i][c]);
+
+                }
+            });
+        });
+
+        
+    function DateWoSet(){
+        yessterday.setMonth(kako.getMonth());aweek.setMonth(kako.getMonth());amonth.setMonth(kako.getMonth());smonth.setMonth(kako.getMonth());
+        
+        yessterday.setDate(kako.getDate() - 1);
+
+        
+        aweek.setDate(kako.getDate() - 7);
+
+        
+        amonth.setDate(kako.getDate() - 20);
+
+        
+        smonth.setDate(kako.getDate() - 40);
+        kyou =  ( '00' + String(kako.getMonth()+1) ).slice( -2 ) + ( '00' +  kako.getDate() ).slice( -2 ); //もじれつ
+        console.log(kyou);
+        dayl = ( '00' + String(yessterday.getMonth()+1) ).slice( -2 ) + ( '00' +  yessterday.getDate() ).slice( -2 ); //もじれつ
+        weekl = ( '00' + String(aweek.getMonth()+1) ).slice( -2 ) + ( '00' +  aweek.getDate() ).slice( -2 ); //もじれつ
+        monthl = ( '00' + String(amonth.getMonth()+1) ).slice( -2 ) + ( '00' +  amonth.getDate() ).slice( -2 ); //もじれつ
+        smonthl = ( '00' + String(smonth.getMonth()+1) ).slice( -2 ) + ( '00' +  smonth.getDate() ).slice( -2 ); //もじれつ
+        console.log(kyou,dayl,weekl,monthl,smonthl);
+        hyoji =[[],[],[]];
+        console.log(key);
+        key.forEach((e,i) => {
+            key[i].forEach((t,c) => {
+                if(key[i][c].includes(dayl) || key[i][c].includes(weekl)  || key[i][c].includes(monthl) || key[i][c].includes(smonthl)){
+                    //cをきろく
+                    console.log(key[i][c].includes(dayl) || key[i][c].includes(weekl)  || key[i][c].includes(monthl) || key[i][c].includes(smonthl));
+                    console.log(t);
+                    dd[i].style.background =  "rgb(50, 197, 62)";
+                    hyoji[i].push(key[i][c]);
+
+                }
+            });
+        });
+    };
+
+            dd[2].addEventListener("click",()=>{  //クリック
+                console.log(dd[2].style.background);
+        if(dd[2].style.background != "rgb(156, 156, 156)"){ //グレーアウトされていなければ
+                    dd.forEach((e,i) => {   //全て非表示
+                        dd[i].style.display ="none";
+                        kotaehyouji.style.display ="block";
+                    });
+                     
+                     let quiz= [];
+                     let answer =[];
+                     let hyojiji = [];
+                    hyoji[2].forEach((e,i) => {
+                        hyojiji.push(hyoji[2][i].slice( 4 ));
+                    });
+                    let hyojijiji = (hyojiji.join(";")).split(";");
+                    console.log(hyoji,hyojiji,hyojijiji);
+                    hyojijiji.forEach((e,i) => {
+                        if(i%2 == 0){
+                            quiz.push(hyojijiji[i]);
+                            console.log("a");
+                        }else{
+                            answer.push(hyojijiji[i]);
+                            console.log("b");
+                        }
+                    });
+                    // 新しいHTML要素を作成
+                   console.log(quiz);
+                   quiz.forEach((e,i)=> {
+                    let trtag = document.createElement("tr");
+                     let tdtag = document.createElement("td");
+                     let tdtag2 = document.createElement("td");
+                        tdtag.innerText = String(i) + "　" + quiz[i];
+                        tdtag2.innerText = answer[i];
+                        tdtag2.className = "tdans";
+                        trtag.appendChild(tdtag);
+                        trtag.appendChild(tdtag2);
+                        table.appendChild(trtag);
+                    });
+                    let tdtagans = document.getElementsByClassName("tdans");
+                    for(let i=0;i<tdtagans.length;i++){
+                        tdtagans[i].style.display = "none";
+                        
+                    }
+                    kotaehyouji.addEventListener("click",()=>{
+                        for(let i=0;i<tdtagans.length;i++){
+                        tdtagans[i].style.display = "block";
+                        }
+                    })
+                    
+                    
+                    
+                }
+            });
+
+
+
+        bb.addEventListener("click",()=>{  //クリック
+                        bb.style.display ="none";
+                        tt.style.display ="block";
+                        ok.style.display ="block";
+                        dd[0].style.display ="none";
+                        dd[1].style.display ="none";
+                        dd[2].style.display ="none";
+                    tt.textContent = localStorage.saveKey;
+            })
+        ok.addEventListener("click",()=>{
+            console.log(tt);
+            localStorage.saveKey=tt.value ;
+        })
+
+    </script>
+</body>
+</html>
