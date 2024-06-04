@@ -18,6 +18,11 @@
             bottom: 465px;
             
         }
+#sticky{
+
+postion: -webkit-sticky;
+    position: sticky;
+    top: 0;}
     </style>
 </head>
 <body>
@@ -37,10 +42,13 @@
     <div id="mondai">
         <textarea id="tt" cols="150" rows="10"></textarea>
         <input type="button" value="ok" id="ok">
+<div id="sticky">
         <input type="button" value="答えを表示" id="kotaehyouji">
         
         <input type="button" value="答えをかくす" id="hideAnswer">
-        <div id="kotae"></div>
+        <div id="kotae">
+</div>
+</div>
         <table id="table" border="1" style="border-collapse: collapse">
             
         </table>
@@ -53,6 +61,7 @@
         let table = document.getElementById("table");
         let kotae = document.getElementById("kotae");
         let kotaehyouji = document.getElementById("kotaehyouji");
+let sticky = document.getElementById("sticky");
         
         let hideAnswer = document.getElementById("hideAnswer");
         let dd=[document.getElementById("r"),
