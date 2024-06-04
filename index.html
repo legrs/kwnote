@@ -38,6 +38,8 @@
         <textarea id="tt" cols="150" rows="10"></textarea>
         <input type="button" value="ok" id="ok">
         <input type="button" value="答えを表示" id="kotaehyouji">
+        
+        <input type="button" value="答えをかくす" id="hideAnswer">
         <div id="kotae"></div>
         <table id="table" border="1" style="border-collapse: collapse">
             
@@ -51,6 +53,8 @@
         let table = document.getElementById("table");
         let kotae = document.getElementById("kotae");
         let kotaehyouji = document.getElementById("kotaehyouji");
+        
+        let hideAnswer = document.getElementById("hideAnswer");
         let dd=[document.getElementById("r"),
         
         document.getElementById("s"),
@@ -197,6 +201,11 @@ smonth.setDate(today.getDate() - 40);
                     kotaehyouji.addEventListener("click",()=>{
                         for(let i=0;i<tdtagans.length;i++){
                         tdtagans[i].style.display = "block";
+                        }
+                    })
+            hideAnswer.addEventListener("click",()=>{
+                        for(let i=0;i<tdtagans.length;i++){
+                        tdtagans[i].style.display = "none";
                         }
                     })
                     
