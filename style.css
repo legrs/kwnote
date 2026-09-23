@@ -1,0 +1,186 @@
+:root{
+  --bg:#ffffff; --fg:#000000; --border:#000000; --accent:#3a5a8c;
+  --hidden-bg:#2b2b2b; --hidden-fg:#2b2b2b;
+  --turn1-bg:#e7effa; --turn2-bg:#e8f5ea; --turn3-bg:#fbf3d6; --turn4-bg:#fbe6da;
+  --done-bg:#dcdcdc; --done-fg:#6b6b6b;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#181818; --fg:#eae7e0; --border:#3a3a3a; --accent:#8fb3ef;
+    --hidden-bg:#3a3a3a; --hidden-fg:#3a3a3a;
+    --turn1-bg:#1e2a3a; --turn2-bg:#1f2e22; --turn3-bg:#332d16; --turn4-bg:#3a2a1c;
+    --done-bg:#333333; --done-fg:#999999;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#181818; --fg:#eae7e0; --border:#000000; --accent:#8fb3ef;
+  --hidden-bg:#3a3a3a; --hidden-fg:#3a3a3a;
+  --turn1-bg:#1e2a3a; --turn2-bg:#1f2e22; --turn3-bg:#332d16; --turn4-bg:#3a2a1c;
+  --done-bg:#333333; --done-fg:#999999;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*{box-sizing:border-box;}
+body{
+  background:#ece9d8; color:var(--fg); font-family:"Hiragino Sans","Yu Gothic",sans-serif;
+  margin:0; 
+  padding:0px; 
+  line-height:1.6;
+}
+hr {
+  border: 1px solid #d2cba4;
+}
+.top-bar{
+    display:flex; justify-content:space-between; align-items:flex-end; gap:0px; flex-wrap:wrap; margin:0px;
+    width:100%;
+    padding:0.8rem;
+    background: linear-gradient(to bottom,#367feb,  #55a4fe 8%, #0058e6 25%, #0167fb 80%,#1553d2);
+}
+.date-field{display:flex; flex-direction:column;}
+.date-field-right{align-items:flex-end;}
+.field-label{
+    font-size:0.9rem; display:block; margin-bottom:2px;
+}
+.app-title{
+    font-size:1.5rem; 
+    text-align:center; 
+    margin:0 0 4px;
+    color:#ffffff;
+    text-shadow:2px 2px 0 #000000;
+}
+.app-hint{font-size:0.8rem; opacity:0.7; margin:0 0 16px; text-align:center;}
+.section{border:1px solid var(--border); border-radius:0px; padding:12px 14px; margin-bottom:16px;}
+.section-title{font-weight:bold; margin:0 0 10px; font-size:1.2rem;}
+.loading-wrap{
+    position:relative;
+    background:#f4f6f7;
+    border-top:3px solid #d2cba4;
+    border-left:3px solid #d2cba4;
+    border-bottom:3px solid #fff;
+    border-right:3px solid #fff;
+}
+
+th {
+  border-bottom: 2px solid #d2cba4;
+}
+.loading-overlay{
+  position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+  gap:8px; background:var(--bg); opacity:0.94; font-size:0.85rem; z-index:5; border-radius:4px;
+}
+.loading-overlay.active{display:flex;}
+.spinner{
+    width:16px; 
+    height:16px; 
+    border:3px solid #0c4ed5; 
+    border-top-color:#ccdbfc; 
+    border-radius:50%; 
+    animation:qa-spin 0.8s linear infinite;
+}
+@keyframes qa-spin{to{transform:rotate(360deg);}}
+.reading-controls, .backup-controls, .settings-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+.qa-table{width:100%; border-collapse:collapse; overflow-x:auto; display:block;}
+.qa-table thead, .qa-table tbody{display:table; width:100%; table-layout:fixed;}
+.qa-row{cursor:pointer;
+  border-bottom: 1px solid #0000ff;
+}
+.qa-row.turn-color-1{background:var(--turn1-bg);}
+.qa-row.turn-color-2{background:var(--turn2-bg);}
+.qa-row.turn-color-3{background:var(--turn3-bg);}
+.qa-row.turn-color-4{background:var(--turn4-bg);}
+.qa-row.selected .qa-cell{
+    /*
+    border-top:3px solid var(--accent); border-bottom:3px solid var(--accent);
+    */
+    border-top: none;
+    border-left: 1px solid #fff;
+    border-right: none;
+    background:#0c4ed5;
+    color:#fff;
+}
+
+.qa-row.qa-row-done .qa-cell{
+    background:var(--done-bg); color:var(--done-fg);
+    border-left: 1px solid #fff;
+}
+
+/*
+.qa-row.selected .qa-cell:first-child{border-left:3px solid var(--accent);}
+.qa-row.selected .qa-cell:last-child{border-right:3px solid var(--accent);}
+*/
+.qa-cell{
+    padding:7px 5px; vertical-align:middle; font-size:0.9rem; word-break:break-word;
+    border-top: none;
+    border-left: 1px solid #0000ff;
+    border-right: none;
+    padding: 8px 12px;
+}
+.qa-cell-turn{width:10%; text-align:center;border-left:none;}
+.qa-cell-question{width:30%;}
+.qa-cell-answer{width:28%;}
+.qa-cell-sentence{width:90%;}
+.answer-hidden{background:#000; color:#000; border-radius:0px; padding:2px 6px;}
+.answer-visible{
+    padding:2px 6px;
+}
+.qa-cell-note{width:32%;}
+button{
+    cursor:pointer; 
+    border:1px solid var(--border); 
+    border-radius:3px; 
+    background: linear-gradient(to bottom,#fff,  #e4e4d9 80%,  #cfcfbf);
+    color:var(--fg); 
+    padding:4px 8px; 
+    font-size:0.85rem;
+
+}
+button:hover{
+    border:1px solid #000;
+    outline:3px solid #f3c44b;
+    outline-offset:-4px;
+}
+button:active{
+    background: linear-gradient(to bottom,#cfcfbf,  #e4e4d9 20%,  #fff);
+    border:1px solid #000;
+    outline:3px solid #f3c44b;
+    outline-offset:-4px;
+}
+button:disabled{
+    opacity:0.6; cursor:default;
+}
+input[type=text], input[type=date], textarea, input[type=number]{
+  border:1.5px solid var(--border); 
+  border-top-color:#000;
+  border-left-color:#000;
+  border-right-color:#ccc;
+  border-bottom-color:#ccc;
+  background:var(--bg); color:var(--fg); padding:10px 10px; font-size:1rem;
+}
+.add-form{
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;
+    }
+.add-form input[type=text]{flex:1; min-width:100px;}
+.field-group{
+    display:flex; flex-direction:column;
+    flex-grow:1;
+}
+.empty-msg{
+    opacity:0.6; font-size:0.85rem;
+}
+.backup-area{width:100%; height:80px; font-family:monospace; font-size:0.75rem; margin-top:6px;}
+.settings-row label{font-size:0.8rem;}
+.settings-row input[type=number]{width:50px;}
+.mobile-controls{display:none;}
+
+@media (max-width:700px){
+  .qa-cell-turn{display:none;}
+  body{padding-bottom:72px;}
+  .mobile-controls{
+    display:flex; gap:8px; justify-content:space-around; align-items:center;
+    position:fixed; left:0; right:0; bottom:0;
+    padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px));
+    background:var(--bg); border-top:1px solid var(--border);
+  }
+  .mobile-controls button{flex:1; font-size:1rem; padding:8px 4px;}
+}
+

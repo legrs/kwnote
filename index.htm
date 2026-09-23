@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>【画期的な】記憶を支援しますあなたの。完成されたツステムによる誘導。私たちはビミウムは無効化することが推奨しますが、これはjkcで動かすことができる。</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+<div class="top-bar">
+  <div class="date-field">
+    <span style="color:white;">Registering Date</span>
+    <input type="date" id="reg-date-input">
+  </div>
+<h1 class="app-title">MEMORY SUPPORT SYSTEM</h1>
+  <div class="date-field date-field-right">
+    <span style="color:white;">Reference Date</span>
+    <input type="date" id="today-date-input">
+  </div>
+</div>
+
+<div style="padding:15pt">
+<!--<h1 class="app-title">記憶支援システム</h1>-->
+<!--<p class="app-hint">j/k:選択移動　Enter:答えトグル　C:OK（入力欄フォーカス中は無効）</p>-->
+
+<br>
+  <p class="section-title">今日のぶんしょう：</p>
+  <div class="loading-wrap" id="reading-wrap">
+    <table class="qa-table">
+      <thead>
+        <tr class="qa-row">
+          <th class="qa-cell qa-cell-turn">Turn</th>
+          <th class="qa-cell qa-cell-sentence">Sentences</th>
+        </tr>
+      </thead>
+      <tbody id="reading-tbody"></tbody>
+    </table>
+    <p class="empty-msg" id="reading-empty" style="display:none;">- None -</p>
+    <div class="loading-overlay" id="reading-loading"><span class="spinner"></span>Processing…</div>
+  </div>
+  <br>
+
+  <p class="section-title">今日のもんだい：</p>
+  <div class="loading-wrap" id="qa-wrap">
+    <table class="qa-table">
+      <thead>
+        <tr class="qa-row">
+          <th class="qa-cell qa-cell-turn">Turn</th>
+          <th class="qa-cell qa-cell-question">Que.</th>
+          <th class="qa-cell qa-cell-answer">Ans.</th>
+          <th class="qa-cell qa-cell-note">Sup.</th>
+        </tr>
+      </thead>
+      <tbody id="qa-tbody"></tbody>
+    </table>
+    <p class="empty-msg" id="qa-empty" style="display:none;">- None -</p>
+    <div class="loading-overlay" id="qa-loading"><span class="spinner"></span>Processing…</div>
+  </div>
+
+
+  <!--
+<div class="section" id="reading-section">
+</div>
+
+<div class="section" id="qa-section">
+</div>
+
+<div class="section" id="settings-section">
+</div>
+<div class="section" id="backup-section">
+</div>
+  -->
+
+  <br>
+  <hr>
+  <p class="section-title">Registering:</p>
+
+  <div class="add-form" style="width:100%;">
+    <div class="field-group">
+      <span class="field-label">Sentences</span>
+      <input type="text" id="new-sentence-input">
+    </div>
+    <button id="add-sentence-btn">REGISTER</button>
+  </div>
+
+
+  <div class="add-form" style="width:100%">
+    <div class="field-group">
+      <span class="field-label">Question</span>
+      <input type="text" id="input-question">
+    </div>
+    <div class="field-group">
+      <span class="field-label">Answer</span>
+      <input type="text" id="input-answer">
+    </div>
+    <div class="field-group">
+      <span class="field-label">Supplement</span>
+      <input type="text" id="input-note">
+    </div>
+    <button id="add-qa-btn">REGISTER</button>
+  </div>
+
+  <br>
+
+  <p class="section-title">Interaval Settings:</p>
+  <div class="settings-row">
+    <label>turn 1: <input type="number" id="n1" min="0"></label>
+    <label>turn 2: <input type="number" id="n2" min="0"></label>
+    <label>turn 3: <input type="number" id="n3" min="0"></label>
+    <label>turn 4: <input type="number" id="n4" min="0"></label>
+    <button id="save-settings-btn">SAVE</button>
+  </div>
+  <br>
+  <p class="section-title">Backup:</p>
+  <div class="backup-controls">
+    <button id="export-btn">EXPORT</button>
+    <button id="import-btn">LOAD</button>
+  </div>
+  <textarea class="backup-area" id="backup-area" placeholder="Export results are shown here / Paste the JSON to load here"></textarea>
+
+
+<div class="mobile-controls">
+  <button id="m-up">▲</button>
+  <button id="m-down">▼</button>
+  <button id="m-show">Show</button>
+  <button id="m-ok">Sure</button>
+</div>
+
+</div>
+
+<script src="script.js">
+</script>
+</body>
+</html>
