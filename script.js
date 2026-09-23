@@ -93,7 +93,7 @@ function doRefresh(){
     render();
     showLoading("qa-loading", false);
     showLoading("reading-loading", false);
-  }, 5000);
+  }, 500);
 }
 
 function findItem(id, items){
