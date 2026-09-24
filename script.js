@@ -185,15 +185,34 @@ function markOk(id){
   var it = findItem(id, items);
   if(!it) return;
   if(!it.completedTurns) it.completedTurns = [];
-  var idx = it.completedTurns.indexOf(entry.turn);
-  if(idx === -1){
+  var idx2 = it.completedTurns.indexOf(entry.turn);
+  if(idx2 === -1){
     it.completedTurns.push(entry.turn);
     doneThisSession[id] = true;
   } else {
-    it.completedTurns.splice(idx, 1);
+    it.completedTurns.splice(idx2, 1);
     delete doneThisSession[id];
   }
   saveItems(items);
+
+  // autofocus
+  var curIdx = currentDueList.findIndex(function(x){ return x.id === id; });
+  if(curIdx !== -1){
+    var n = currentDueList.length;
+    for(var d = 1; d < n; d++){
+      var prevIdx = curIdx - d;
+      if(prevIdx >= 0 && !doneThisSession[currentDueList[prevIdx].id]){
+        selectedId = currentDueList[prevIdx].id;
+        break;
+      }
+      var nextIdx = curIdx + d;
+      if(nextIdx < n && !doneThisSession[currentDueList[nextIdx].id]){
+        selectedId = currentDueList[nextIdx].id;
+        break;
+      }
+    }
+  }
+
   render();
 }
 

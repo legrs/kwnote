@@ -87,7 +87,11 @@ th {
 
 .qa-row.qa-row-done .qa-cell{
     background:var(--done-bg); color:var(--done-fg);
+    border-left: 1px solid;
+}
+.qa-row.selected .qa-cell{
     border-left: 1px solid #fff;
+    background:#0c4ed5;
 }
 
 /*
