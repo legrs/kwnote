@@ -65,7 +65,11 @@ function computeDueList(items, settings, today){
     var t = dueTurn(it, settings, today);
     if(t){ list.push({id:it.id, turn:t}); }
   });
-  list.sort(function(a,b){ return a.turn - b.turn; });
+  // Fisher-Yates shuffle
+  for(var i = list.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = list[i]; list[i] = list[j]; list[j] = tmp;
+  }
   return list;
 }
 
