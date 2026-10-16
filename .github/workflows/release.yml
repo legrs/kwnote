@@ -1,0 +1,234 @@
+name: Release
+
+# Push a tag like v1.2.3 (matching cli/Cargo.toml) to build every target and
+# publish a GitHub Release.
+#
+# Run manually (workflow_dispatch) to rebuild an existing release from the
+# selected branch, e.g. to add newly supported platforms to it. That is only
+# allowed when everything compiled into the binary is identical to the tag,
+# and it only *adds* missing assets (existing ones are never replaced).
+# With "publish" unticked it is a dry run that just builds and smoke-tests
+# the selected branch (any sources; nothing is uploaded).
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to add assets to (e.g. v1.0.0)
+        required: true
+      publish:
+        description: Upload the missing assets (otherwise build only)
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+jobs:
+  version:
+    name: Version / source check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag matches cli/Cargo.toml
+        run: |
+          v=$(grep -m1 '^version' cli/Cargo.toml | cut -d'"' -f2)
+          if [ "v$v" != "$TAG" ]; then
+            echo "::error::tag $TAG does not match cli/Cargo.toml version $v"
+            exit 1
+          fi
+      - name: Binary inputs identical to the tag
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        run: |
+          git rev-parse -q --verify "refs/tags/$TAG" >/dev/null || { echo "::error::no tag $TAG"; exit 1; }
+          # everything that ends up inside the executable
+          paths="cli/src cli/build.rs cli/about.toml cli/about.hbs Cross.toml index.htm script.js sync.js beta.js qr.js style.css sw.js manifest.webmanifest icon.svg"
+          fail() { echo "::error::$GITHUB_REF_NAME differs from $TAG in what is compiled into kwnote ($1); cut a new release instead"; exit 1; }
+          git diff --stat --exit-code "$TAG" HEAD -- $paths || fail "sources"
+          # the lockfile moved from cli/ to the workspace root after v1.0.0: compare content
+          { git show "$TAG:Cargo.lock" 2>/dev/null || git show "$TAG:cli/Cargo.lock"; } | diff - Cargo.lock || fail "Cargo.lock"
+          echo "build inputs on $GITHUB_REF_NAME ($(git rev-parse --short HEAD)) are identical to $TAG"
+
+  ci:
+    needs: version
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/ci.yml
+
+  licenses:
+    name: Third-party licenses
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      # keep the version in step with ci.yml
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-about@0.9.2
+      - name: Generate THIRD-PARTY-LICENSES.txt
+        run: cargo about generate --locked -m cli/Cargo.toml -c cli/about.toml cli/about.hbs -o THIRD-PARTY-LICENSES.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: third-party-licenses
+          path: THIRD-PARTY-LICENSES.txt
+          if-no-files-found: error
+
+  build:
+    name: ${{ matrix.target }}
+    needs: [version, ci, licenses]
+    if: ${{ !cancelled() && needs.version.result == 'success' && needs.licenses.result == 'success' && needs.ci.result != 'failure' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ---- native toolchains on GitHub runners
+          - { target: x86_64-unknown-linux-gnu,      os: ubuntu-latest,    tool: cargo, run: native }
+          - { target: aarch64-unknown-linux-gnu,     os: ubuntu-24.04-arm, tool: cargo, run: native }
+          - { target: x86_64-apple-darwin,           os: macos-latest,     tool: cargo, run: native }
+          - { target: aarch64-apple-darwin,          os: macos-latest,     tool: cargo, run: native }
+          - { target: x86_64-pc-windows-msvc,        os: windows-latest,   tool: cargo, run: native }
+          - { target: i686-pc-windows-msvc,          os: windows-latest,   tool: cargo, run: native }
+          - { target: aarch64-pc-windows-msvc,       os: windows-latest,   tool: cargo, run: none }
+          # ---- cross (Docker images; Linux ones are smoke-tested under QEMU)
+          - { target: x86_64-unknown-linux-musl,     os: ubuntu-latest,    tool: cross, run: cross }
+          - { target: aarch64-unknown-linux-musl,    os: ubuntu-latest,    tool: cross, run: cross }
+          - { target: i686-unknown-linux-gnu,        os: ubuntu-latest,    tool: cross, run: cross }
+          - { target: i686-unknown-linux-musl,       os: ubuntu-latest,    tool: cross, run: cross }
+          - { target: armv7-unknown-linux-gnueabihf, os: ubuntu-latest,    tool: cross, run: cross }
+          - { target: armv7-unknown-linux-musleabihf, os: ubuntu-latest,   tool: cross, run: cross }
+          - { target: arm-unknown-linux-gnueabihf,   os: ubuntu-latest,    tool: cross, run: cross }
+          - { target: arm-unknown-linux-musleabihf,  os: ubuntu-latest,    tool: cross, run: cross }
+          - { target: riscv64gc-unknown-linux-gnu,   os: ubuntu-latest,    tool: cross, run: cross }
+          - { target: powerpc64le-unknown-linux-gnu, os: ubuntu-latest,    tool: cross, run: cross }
+          - { target: s390x-unknown-linux-gnu,       os: ubuntu-latest,    tool: cross, run: cross }
+          - { target: loongarch64-unknown-linux-gnu, os: ubuntu-latest,    tool: cross, run: cross }
+          - { target: aarch64-linux-android,         os: ubuntu-latest,    tool: cross, run: none }
+          - { target: armv7-linux-androideabi,       os: ubuntu-latest,    tool: cross, run: none }
+          - { target: x86_64-linux-android,          os: ubuntu-latest,    tool: cross, run: none }
+          - { target: x86_64-unknown-freebsd,        os: ubuntu-latest,    tool: cross, run: none }
+          - { target: x86_64-unknown-netbsd,         os: ubuntu-latest,    tool: cross, run: none }
+          - { target: x86_64-unknown-illumos,        os: ubuntu-latest,    tool: cross, run: none }
+          - { target: x86_64-pc-windows-gnu,         os: ubuntu-latest,    tool: cross, run: none }
+    runs-on: ${{ matrix.os }}
+    env:
+      # embedded by cli/build.rs (`kwnote licenses`); job-wide so that
+      # `cross run` below doesn't rebuild without it
+      KWNOTE_LICENSES: THIRD-PARTY-LICENSES.txt
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: third-party-licenses
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      - name: Install cross
+        if: matrix.tool == 'cross'
+        run: command -v cross || cargo install cross --git https://github.com/cross-rs/cross --locked
+      - name: Build
+        shell: bash
+        run: ${{ matrix.tool }} build --release --locked -p kwnote --target ${{ matrix.target }}
+      - name: Stage asset
+        shell: bash
+        run: |
+          mkdir -p dist
+          ext=""; [[ "${{ matrix.target }}" == *windows* ]] && ext=".exe"
+          cp "target/${{ matrix.target }}/release/kwnote$ext" "dist/kwnote-${{ matrix.target }}$ext"
+          ls -l dist
+          # the license notices really got embedded (also under cross)
+          grep -aq "Used by:" "dist/kwnote-${{ matrix.target }}$ext" || { echo "::error::license notices missing from the binary"; exit 1; }
+      - name: Smoke test (native)
+        if: matrix.run == 'native' && matrix.target != 'x86_64-apple-darwin'
+        shell: bash
+        run: |
+          bin=$(ls dist/kwnote-*)
+          "$bin" --version
+          "$bin" --data "$RUNNER_TEMP/kw.json" add qa smoke test
+          "$bin" --data "$RUNNER_TEMP/kw.json" list --all | grep -q smoke
+          "$bin" licenses | grep -q "third-party licenses"
+      - name: Smoke test (QEMU)
+        if: matrix.run == 'cross'
+        # every `cross run` is a fresh container: keep the data file in the
+        # mounted workspace so it survives from `add` to `list`
+        run: |
+          rm -f smoke-kw.json
+          cross run --release --locked -p kwnote --target ${{ matrix.target }} -- --version
+          cross run --release --locked -p kwnote --target ${{ matrix.target }} -- --data smoke-kw.json add qa smoke test
+          cross run --release --locked -p kwnote --target ${{ matrix.target }} -- --data smoke-kw.json list --all | tee /dev/stderr | grep -q smoke
+          cross run --release --locked -p kwnote --target ${{ matrix.target }} -- licenses | grep -q "third-party licenses"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kwnote-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    if: ${{ !cancelled() && needs.build.result == 'success' && (github.event_name == 'push' || inputs.publish) }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Add missing assets to an existing release
+        id: existing
+        run: |
+          if ! gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+          mkdir have && gh release download "$TAG" -R "$GITHUB_REPOSITORY" -D have -p 'kwnote-*'
+          new=()
+          for f in dist/kwnote-*; do
+            n=$(basename "$f")
+            if [ -e "have/$n" ]; then echo "keep   $n (already released)"; else echo "add    $n"; cp "$f" have/; new+=("have/$n"); fi
+          done
+          n=THIRD-PARTY-LICENSES.txt
+          if gh release download "$TAG" -R "$GITHUB_REPOSITORY" -D have -p "$n" 2>/dev/null; then echo "keep   $n (already released)"
+          else echo "add    $n"; cp "dist/$n" have/; new+=("have/$n"); fi
+          (cd have && sha256sum kwnote-* "$n" > SHA256SUMS && cat SHA256SUMS)
+          if [ ${#new[@]} -gt 0 ]; then gh release upload "$TAG" -R "$GITHUB_REPOSITORY" "${new[@]}"; fi
+          gh release upload "$TAG" -R "$GITHUB_REPOSITORY" have/SHA256SUMS --clobber
+      - name: Create release
+        if: steps.existing.outputs.exists == 'false'
+        run: |
+          (cd dist && sha256sum kwnote-* THIRD-PARTY-LICENSES.txt > SHA256SUMS && cat SHA256SUMS)
+          cat > notes.md <<NOTES
+          kwnote — spaced-repetition memory notes: web app (PC / phone) + vim-style terminal UI,
+          synced by animated QR codes, text codes, files or your LAN (\`kwnote serve\`).
+          See the [README](https://github.com/${GITHUB_REPOSITORY}/blob/${TAG}/README.md).
+
+          ## Install
+
+          macOS / Linux / BSD / Termux:
+          \`\`\`sh
+          curl -fsSL https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/install.sh | sh
+          \`\`\`
+          Windows (PowerShell):
+          \`\`\`powershell
+          irm https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/master/install.ps1 | iex
+          \`\`\`
+          Or download the \`kwnote-<target>\` file for your platform below and put it on your \`PATH\` as \`kwnote\`.
+          Already installed? \`kwnote update\` (checksum-verified against \`SHA256SUMS\`).
+
+          kwnote is licensed under the Apache License 2.0. The licenses of the Rust crates built into
+          the binaries are in \`THIRD-PARTY-LICENSES.txt\` below (also printed by \`kwnote licenses\`).
+          NOTES
+          gh release create "$TAG" dist/* -R "$GITHUB_REPOSITORY" \
+            --title "kwnote $TAG" \
+            --notes-file notes.md \
+            --verify-tag

@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    name: Rust (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: rustfmt
+        if: runner.os == 'Linux'
+        run: cargo fmt --check
+      - name: clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+      - name: test
+        run: cargo test --locked
+
+  web:
+    name: Web app + JS/Rust interop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: JavaScript syntax
+        run: for f in script.js sync.js beta.js qr.js sw.js; do node --check "$f"; done
+      - name: index.htm asset versions match the files (cache busting)
+        run: node tests/web_version.mjs
+      - name: Manifest is valid JSON
+        run: node -e 'JSON.parse(require("fs").readFileSync("manifest.webmanifest", "utf8"))'
+      - name: Build CLI
+        run: cargo build --locked
+        working-directory: cli
+      - name: qr.js matches the Rust qrcode crate
+        run: |
+          (cd cli && cargo run -q --locked --example qr_fixtures) > "$RUNNER_TEMP/qr.json"
+          node tests/qr_crosscheck.mjs "$RUNNER_TEMP/qr.json"
+      - name: Sync codes and merge rules agree (JS <-> Rust)
+        run: node tests/sync_interop.mjs
+      - name: Spreadsheet script (tools/sheets/kwnote.gs) round-trips and merges
+        run: node tests/sheets_gs.mjs
+      - name: Beta (?beta=true) schedule extension
+        run: node tests/beta_schedule.mjs
+
+  licenses:
+    name: Third-party licenses (cargo-about)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      # keep the version in step with release.yml
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-about@0.9.2
+      - name: Every dependency has an accepted license (cli/about.toml)
+        run: |
+          cargo about generate --locked -m cli/Cargo.toml -c cli/about.toml cli/about.hbs -o THIRD-PARTY-LICENSES.txt
+          sed -n '/^Overview/,/^---/p' THIRD-PARTY-LICENSES.txt
+
+  installers:
+    name: Installer (${{ matrix.os }})
+    # installs the *published* latest release, exactly like the README one-liners
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      GITHUB_TOKEN: ${{ github.token }}  # API rate limit for `kwnote update --check`
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        if: runner.os == 'Linux'
+        run: shellcheck -S warning install.sh
+      - name: install.sh | sh
+        if: runner.os != 'Windows'
+        run: |
+          KWNOTE_INSTALL_DIR="$RUNNER_TEMP/bin" sh < install.sh
+          "$RUNNER_TEMP/bin/kwnote" --version
+          "$RUNNER_TEMP/bin/kwnote" update --check
+      - name: install.ps1 | iex
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:KWNOTE_INSTALL_DIR = Join-Path $env:RUNNER_TEMP 'kwbin'
+          Get-Content -Raw install.ps1 | Invoke-Expression
+          & (Join-Path $env:KWNOTE_INSTALL_DIR 'kwnote.exe') --version
+          & (Join-Path $env:KWNOTE_INSTALL_DIR 'kwnote.exe') update --check
