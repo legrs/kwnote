@@ -1,3 +1,7 @@
+https://legrs.github.io/kwnote/
+
+## KWNOTE
+
 記憶支援システムです．2026年に作りなおしました
 
 registerで問答を登録，Interval Settingsにある通り日後経過すると表示されます．
@@ -7,7 +11,3 @@ cをおさなかった問答は次の日も表示され続けます．
 XPライクにしてみました．いいでしょ
 
 なんと，backup機能つき
-
-
-
-
